@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{
+            background: black;
+    
+        }
+        canvas{
+            background: black;
+
+        }
+        body{
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+    <title>Black Hole Simulation</title>
+</head>
+<body>
+    <canvas id="c" width="600" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        for (let i=0;i<150;i++){
+            let s = {
+                x:Math.random()*600,
+                y:Math.random()*600,
+                vx:(Math.random()-0.5)*2,
+                vy:(Math.random()-0.5)*2
+
+        }
+            stars.push(s);
+    }
+    let bhX = 300;
+    let bhY = 300;
+    let waves = [];       // stores all active wave rings
+    let frameCount = 0;   // counts frames, every 30 frames spawn a new wave
+    canvas.addEventListener('click', function(e) {
+        const rect = canvas.getBoundingClientRect();
+        bhX = e.clientX - rect.left;
+        bhY = e.clientY - rect.top;
+    });
+    let diskParticles = [];
+    for (let i=0;i<200;i++){
+        diskParticles.push({
+            angle: Math.random()*Math.PI*2,
+            radius:30+Math.random()*50,
+            speed:0.01+Math.random()*0.02
+        })
+    }
+    function draw(){
+        //clear canvas
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, 600, 600);
+        //update star positions based on gravity
+        
+        for (let i=0;i<stars.length;i++){
+            let dx= bhX - stars[i].x;
+            let dy= bhY - stars[i].y;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance < 20) {
+            stars[i].x=Math.random()*600;
+            stars[i].y=Math.random()*600;
+            stars[i].vx=(Math.random()-0.5)*2;
+            stars[i].vy=(Math.random()-0.5)*2;
+            continue;
+            }
+            let gravityStrength=200/distance;
+            stars[i].vx+=gravityStrength*dx/distance;
+            stars[i].vy+=gravityStrength*dy/distance;
+            stars[i].x+=stars[i].vx;
+            stars[i].y+=stars[i].vy;
+        }
+        //glow on black hole
+        let glow = ctx.createRadialGradient(bhX, bhY, 0, bhX, bhY, 80);
+        glow.addColorStop(0, 'rgba(150, 50, 255, 0.4)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(bhX, bhY, 60, 0, Math.PI * 2);
+        ctx.fill();
+        //black hole draw
+        ctx.beginPath();
+        ctx.arc(bhX, bhY, 25, 0, Math.PI*2);
+        ctx.fillStyle = 'purple';
+        ctx.fill();
+        for(let i = 0; i< diskParticles.length; i++){
+            diskParticles[i].angle += diskParticles[i].speed;
+
+            let x = bhX + diskParticles[i].radius * Math.cos(diskParticles[i].angle);
+            let y = bhY + diskParticles[i].radius * Math.sin(diskParticles[i].angle)*0.4;
+
+            let heat=1-(diskParticles[i].radius-30)/50;
+            let hue=heat*60;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = `hsl(45, 100%, ${50 + heat * 40}%)`;
+            ctx.fill();
+        }
+        //draw stars
+        for (let i=0;i<stars.length;i++){
+            let dx = bhX - stars[i].x;
+            let dy = bhY - stars[i].y;
+            let distance = Math.sqrt(dx*dx+dy*dy);
+            let hue = 180+(1-Math.min(distance,300)/300)*120;
+            ctx.fillStyle = `hsl(${hue},80%,85%)`;
+            ctx.beginPath();
+            ctx.arc(stars[i].x,stars[i].y,5,0,Math.PI*2);
+            ctx.fill();
+            }
+        
+    }
+    function loop() {
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+    </script>
+</body>
+</html>
